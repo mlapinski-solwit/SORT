@@ -52,7 +52,7 @@ class Tracker:
          :return (OrderedDict) dictionary containing (track_id: Track)
          """
         deregister_ids = []
-        for track_id in self.disappeared.keys():
+        for track_id in list(self.disappeared.keys()):
             self.disappeared[track_id] += 1
             if self.disappeared[track_id] > self.max_disappeared:
                 deregister_ids.append(track_id)

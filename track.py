@@ -1,4 +1,4 @@
-#!\bin\python2.7
+#!\bin\python3.8
 
 from kalman_filter import KalmanFilter
 from tracker_utils import xxyy_to_xysr, xysr_to_xxyy

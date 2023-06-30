@@ -1,4 +1,4 @@
-#!\bin\python2.7
+#!\bin\python3.8
 
 """
 Main module for the real-time tracker class execution. Based on the SORT algorithm

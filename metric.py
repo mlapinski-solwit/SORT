@@ -1,4 +1,4 @@
-#!\bin\python2.7
+#!\bin\python3.8
 
 from __future__ import division, print_function
 from scipy.spatial.distance import cdist
