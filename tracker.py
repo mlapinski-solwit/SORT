@@ -144,9 +144,9 @@ class KalmanTracker(Tracker):
     Specialized tracker class which inherits from the basic Tracker class
     Utilizes the KalmanFilter and the IoU metric for more robust bounding box associations
     """
-    def __init__(self, metric='iou', matching_threshold=0.2):
+    def __init__(self, metric='iou', matching_threshold=0.2, max_disappeared=10):
         """ Initialize the tracker from base class with relevant metrics """
-        Tracker.__init__(self, metric, matching_threshold)
+        Tracker.__init__(self, metric, matching_threshold, max_disappeared)
 
     def update(self, detections):
         """
