@@ -31,11 +31,12 @@ class Tracker:
         self.max_disappeared = max_disappeared
         self.metric = Metric(metric)
 
-    def register(self, state):
+    def register(self, state, detection_index):
         """ Registers a new track with a new detection unmatched to other tracks
         assigns the state to a new Track class object and initialized its data structures
-        :param state: (np.ndarray) initial state vector of object from new detection """
-        self.tracked[self.nextTrackID] = KalmanTrack(state)
+        :param state: (np.ndarray) initial state vector of object from new detection
+        :param detection_index: (int) Index of detection to provide mapping with track_id."""
+        self.tracked[self.nextTrackID] = KalmanTrack(state, detection_index)
         self.disappeared[self.nextTrackID] = 0
         self.nextTrackID += 1
 
@@ -53,6 +54,7 @@ class Tracker:
          """
         deregister_ids = []
         for track_id in list(self.disappeared.keys()):
+            self.tracked[track_id].last_frame_detection_index = -1
             self.disappeared[track_id] += 1
             if self.disappeared[track_id] > self.max_disappeared:
                 deregister_ids.append(track_id)
@@ -61,11 +63,11 @@ class Tracker:
         return self.tracked
 
     def project(self):
-        tracks = [(ID, track.project()) for ID, track in self.tracked.items()]
-
+        tracks = [(ID, track.last_frame_detection_index, track.project()) for ID, track in self.tracked.items()]
         # Make sure tracks are unpacked to their respective states
         if isinstance(tracks, OrderedDict):
-            tracks = [(ID, track.project()) for ID, track in tracks.items() if self.disappeared[ID] == 0]
+            tracks = [(ID, track.last_frame_detection_index, track.project()) for ID, track in tracks.items() if
+                      self.disappeared[ID] == 0]
 
         return tracks
 
@@ -82,7 +84,7 @@ class Tracker:
             elif D[row, col] > self.matching_threshold:
                 # update tracker - set new state and reset 'disappeared' counter
                 track_id = track_ids[row]
-                self.tracked[track_id] = self.tracked[track_id].update(detections[col])
+                self.tracked[track_id] = self.tracked[track_id].update(detections[col], col)
                 self.disappeared[track_id] = 0
                 used_rows.add(row)
                 used_cols.add(col)
@@ -96,6 +98,7 @@ class Tracker:
         if D.shape[0] >= D.shape[1]:
             for row in unused_rows:
                 object_id = track_ids[row]
+                self.tracked[object_id].last_frame_detection_index = -1
                 self.disappeared[object_id] += 1
                 if self.disappeared[object_id] > self.max_disappeared:
                     self.deregister(object_id)
@@ -103,7 +106,7 @@ class Tracker:
         # otherwise, the number of detections > tracked objects - register each new detection
         else:
             for col in unused_cols:
-                self.register(detections[col])
+                self.register(detections[col], col)
 
     def reset(self):
         """ resets the tracker. deletes all registered tracks. relevant for transferring the track to new video """
@@ -163,7 +166,7 @@ class KalmanTracker(Tracker):
         # if we are currently not tracking any objects, register all detections to new tracks
         if len(self.tracked) == 0:
             for i in range(0, len(detections)):
-                self.register(detections[i])
+                self.register(detections[i], i)
 
         # otherwise, check to see how the new detections relate to current tracks
         else:
@@ -219,7 +222,7 @@ class ORBTracker(Tracker):
         # if we are currently not tracking any objects, register all detections to new tracks
         if len(self.tracked) == 0:
             for i in range(0, len(detections)):
-                self.register(detections[i])
+                self.register(detections[i], i)
 
         # otherwise, check to see how the new detections relate to current tracks
         else:
@@ -284,7 +287,7 @@ class ReIDTracker(Tracker):
         # if we are currently not tracking any objects, register all detections to new tracks
         if len(self.tracked) == 0:
             for i in range(0, len(detections)):
-                self.register(detections[i])
+                self.register(detections[i], i)
 
         # otherwise, check to see how the new detections relate to current tracks
         else:

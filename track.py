@@ -9,7 +9,8 @@ class KalmanTrack:
     """
     This class represents the internal state of individual tracked objects observed as bounding boxes.
     """
-    def __init__(self, initial_state):
+
+    def __init__(self, initial_state, detection_index):
         """
         Initialises a tracked object according to initial bounding box.
         :param initial_state: (array) single detection in form of bounding box [X_min, Y_min, X_max, Y_max]
@@ -37,19 +38,22 @@ class KalmanTrack:
         self.kf.Q[-1, -1] *= 0.01  # process noise
         self.kf.Q[4:, 4:] *= 0.01  # process noise
         self.kf.x[:4] = xxyy_to_xysr(initial_state)  # initialize KalmanFilter state
+        self.last_frame_detection_index = detection_index
 
     def project(self):
         """
         :return: (ndarray) The KalmanFilter estimated object state in [x1,x2,y1,y2] format
         """
+        #return np.expand_dims(np.append(xysr_to_xxyy(self.kf.x), self.last_frame_detection_index), 1)
         return xysr_to_xxyy(self.kf.x)
 
-    def update(self, new_detection):
+    def update(self, new_detection, detection_index):
         """
         Updates track with new observation and returns itself after update
         :param new_detection: (np.ndarray) new observation in format [x1,x2,y1,y2]
         :return: KalmanTrack object class (itself after update)
         """
+        self.last_frame_detection_index = detection_index
         self.kf.update(xxyy_to_xysr(new_detection))
         return self
 
